@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  mongo: 
+    image: mongo:latest
+    container_name: mongo-local
+    restart: always
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    ports: 
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+  
+
+  backend:
+    build:
+      context: ./todo-be
+      dockerfile: Dockerfile
+    container_name: todo-be
+    restart: always
+    depends_on:
+      - mongo
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://root:password@mongo:27017/mydatabase?authSource=admin
+      - PORT=3000
+    volumes:
+      - ./todo-be:/app
+    command: npm start
+
+  frontend:
+    build:
+      context: ./Todo-app
+      dockerfile: Dockerfile
+    container_name: todo-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./Todo-app:/usr/src/app
+      - /usr/src/app/node_modules
+    stdin_open: true
+    tty: true
+
+
+volumes:
+  mongo-data:
