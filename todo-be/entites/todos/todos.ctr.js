@@ -1,19 +1,27 @@
 import { Todo } from "./todos.mod.js";
+import { handleError, ErrorTypes } from "../../helpers/errorHandler.js";
 
 export const createTodo = async (req, res) => {
   try {
-    const { title, date, description } = req.body;
+    const { title, date, description, status, taskGroup, startDate, dueDate } =
+      req.body;
+    const user = req.user;
     const todo = new Todo({
       title,
       description,
-      date,
+      status,
+      taskGroup,
+      startDate,
+      dueDate,
+      user: user._id,
     });
 
     if (!title || !date || !description) {
-      return res.status(400).json({
-        message: "All fields are required",
-        status: false,
-      });
+      return handleError(
+        res,
+        ErrorTypes.BAD_REQUEST.code,
+        "All fields are required"
+      );
     }
 
     const data = await todo.save();
@@ -24,6 +32,12 @@ export const createTodo = async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating todo", error);
+    handleError(
+      res,
+      ErrorTypes.INTERNAL_SERVER.code,
+      "Error creating todo",
+      error
+    );
   }
 };
 
@@ -37,12 +51,18 @@ export const getTodos = async (req, res) => {
     });
   } catch (error) {
     console.error("Error getting todos", error);
+    handleError(
+      res,
+      ErrorTypes.INTERNAL_SERVER.code,
+      "Error fetching todos",
+      error
+    );
   }
 };
 
 export const updateTodo = async (req, res) => {
   try {
-    const { title, date, description, completed } = req?.body;
+    const { title, date, description, status } = req?.body;
     const { id } = req.params;
 
     const todo = await Todo.findByIdAndUpdate(
@@ -51,10 +71,15 @@ export const updateTodo = async (req, res) => {
         title,
         description,
         date,
-        completed,
+        status,
       },
       { new: true }
     );
+
+    if (!todo) {
+      return handleError(res, ErrorTypes.NOT_FOUND.code, "Todo not found");
+    }
+
     res.status(200).send({
       message: "Update todo",
       status: true,
@@ -62,13 +87,23 @@ export const updateTodo = async (req, res) => {
     });
   } catch (error) {
     console.error("Error updating todo", error);
+    handleError(
+      res,
+      ErrorTypes.INTERNAL_SERVER.code,
+      "Error updating todo",
+      error
+    );
   }
 };
 
 export const deleteTodo = async (req, res) => {
   try {
     const { id } = req.params;
-    await Todo.findByIdAndDelete(id);
+    const todo = await Todo.findByIdAndDelete(id);
+
+    if (!todo) {
+      return handleError(res, ErrorTypes.NOT_FOUND.code, "Todo not found");
+    }
 
     res.status(200).send({
       message: "Delete todo",
@@ -76,5 +111,11 @@ export const deleteTodo = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting todo", error);
+    handleError(
+      res,
+      ErrorTypes.INTERNAL_SERVER.code,
+      "Error deleting todo",
+      error
+    );
   }
 };
