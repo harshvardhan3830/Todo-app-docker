@@ -12,18 +12,19 @@ const todoSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "completed", "in_progress"],
-      default: "pending",
+      enum: ["todo", "in_progress", "completed"],
+      default: "todo",
     },
     taskGroup: {
       type: String,
-      enum: ["personal", "work", "other"],
-      default: "personal",
+      enum: ["Personal", "Work", "Other"],
+      default: "Personal",
     },
     startDate: {
       type: Date,
       default: Date.now,
     },
+
     dueDate: {
       type: Date,
       default: Date.now,
